@@ -1,0 +1,43 @@
+version: '3' 
+
+services:
+  
+  rabbitmq:
+    image: "rabbitmq:3.9.13-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - 'rabbitmq_data:/data'
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:15672"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+
+  consumer:
+    build:
+      context: ./
+      dockerfile: ./consumer/Dockerfile
+    environment:
+      AMQP_HOST: 'rabbitmq'
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+
+  publisher:
+    build:
+      context: ./
+      dockerfile: ./publisher/Dockerfile
+    environment:
+      AMQP_HOST: 'rabbitmq'
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+
+volumes:
+  rabbitmq_data:
